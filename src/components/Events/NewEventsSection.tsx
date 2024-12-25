@@ -9,7 +9,8 @@ import { fetchEvents } from '../../utils/http.js'
 export default function NewEventsSection() {
 
   const { isLoading, error, data } = useQuery(
-    { queryKey: ['events'], queryFn: fetchEvents }
+    { queryKey: ['events'], 
+      queryFn: () => fetchEvents() }
   );
 
   let content;
