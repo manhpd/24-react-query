@@ -12,7 +12,7 @@ export default function FindEventSection() {
 
   const {data, isLoading, error, isError} = useQuery({
     queryKey: ['events', { search: searchTerm }],
-    queryFn: () => fetchEvents(searchTerm),
+    queryFn: ({signal}) => fetchEvents({signal, searchTerm}),
   })
 
   let content: JSX.Element | string = "";

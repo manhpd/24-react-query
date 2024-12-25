@@ -1,11 +1,11 @@
-export async function fetchEvents(searchTerm: string = '') {
+export async function fetchEvents({signal, searchTerm}: {signal?: AbortSignal, searchTerm?: string} = {}) {
 
     let url = 'http://localhost:3000/events';
     if (searchTerm) {
         url += `?search=${searchTerm}`;
     }
     
-    const response = await fetch(url);
+    const response = await fetch(url, {signal});
 
     if (!response.ok) {
         class FetchError extends Error {
