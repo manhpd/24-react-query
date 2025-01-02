@@ -10,7 +10,7 @@ export default function NewEventsSection() {
 
   const { isLoading, error, data } = useQuery(
     { queryKey: ['events'], 
-      queryFn: () => fetchEvents() }
+      queryFn: ({ signal }) => fetchEvents({ signal }) }
   );
 
   let content;

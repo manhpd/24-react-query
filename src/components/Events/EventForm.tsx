@@ -3,9 +3,16 @@ import { useState } from 'react';
 import ImagePicker from '../ImagePicker.js';
 
 import { ReactNode } from 'react';
+import { fetchSelectableImages } from '../../utils/http.js';
+import { useQuery } from '@tanstack/react-query';
 
 export default function EventForm({ inputData, onSubmit, children }: { inputData?: any, onSubmit: (data: any) => void, children: ReactNode }) {
   const [selectedImage, setSelectedImage] = useState(inputData?.image);
+
+  const { data, isLoading, error, isError } = useQuery({
+    queryKey: ['images'],
+    queryFn: ({ signal }) => fetchSelectableImages({ signal }),
+  });
 
   function handleSelectImage(image: string) {
     setSelectedImage(image);
@@ -33,11 +40,16 @@ export default function EventForm({ inputData, onSubmit, children }: { inputData
       </p>
 
       <div className="control">
-        <ImagePicker
-          images={[]}
-          onSelect={handleSelectImage}
-          selectedImage={selectedImage}
-        />
+        {isLoading && <p>Loading images...</p>}
+        {isError && <ErrorBlock title="An error occurred" message="Failed to fetch images" />}
+        {!isLoading && !isError && data && (
+           <ImagePicker
+           images={data}
+           onSelect={handleSelectImage}
+           selectedImage={selectedImage}
+         />
+          )}
+       
       </div>
 
       <p className="control">

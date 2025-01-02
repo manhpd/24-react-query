@@ -13,7 +13,9 @@ export default function FindEventSection() {
   const {data, isLoading, error, isError} = useQuery({
     queryKey: ['events', { search: searchTerm }],
     queryFn: ({signal}) => fetchEvents({signal, searchTerm}),
-  })
+    // disable the query when the search term is empty
+    enabled: searchTerm !== undefined,
+  });
 
   let content: JSX.Element | string = "";
   if (isLoading) {
