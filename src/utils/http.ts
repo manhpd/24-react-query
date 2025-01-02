@@ -64,3 +64,30 @@ export async function fetchSelectableImages({ signal }: { signal: AbortSignal })
   
     return images;
   }
+
+  export async function fetchEvent({ id, signal }: { id: string; signal: AbortSignal }) {
+    const response = await fetch(`http://localhost:3000/events/${id}`, { signal });
+  
+    if (!response.ok) {
+      const error = new CustomError('An error occurred while fetching the event', response.status, await response.json());
+      throw error;
+    }
+  
+    const { event } = await response.json();
+  
+    return event;
+  }
+  
+  
+  export async function deleteEvent({ id }: { id: string }) {
+    const response = await fetch(`http://localhost:3000/events/${id}`, {
+      method: 'DELETE',
+    });
+  
+    if (!response.ok) {
+      const error = new CustomError('An error occurred while deleting the event', response.status, await response.json());
+      throw error;
+    }
+  
+    return response.json();
+  }

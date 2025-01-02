@@ -5,6 +5,7 @@ import ImagePicker from '../ImagePicker.js';
 import { ReactNode } from 'react';
 import { fetchSelectableImages } from '../../utils/http.js';
 import { useQuery } from '@tanstack/react-query';
+import ErrorBlock from '../UI/ErrorBlock.js';
 
 export default function EventForm({ inputData, onSubmit, children }: { inputData?: any, onSubmit: (data: any) => void, children: ReactNode }) {
   const [selectedImage, setSelectedImage] = useState(inputData?.image);
