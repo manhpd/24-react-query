@@ -91,3 +91,20 @@ export async function fetchSelectableImages({ signal }: { signal: AbortSignal })
   
     return response.json();
   }
+
+  export async function updateEvent({ id, event }: { id: string; event: any }) {
+    const response = await fetch(`http://localhost:3000/events/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ event }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  
+    if (!response.ok) {
+      const info = await response.json();
+      throw new CustomError('An error occurred while updating the event', response.status, info);
+    }
+  
+    return response.json();
+  }
