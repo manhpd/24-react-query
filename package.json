@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.10",
@@ -30,7 +32,6 @@
     "vite": "^4.4.5"
   },
   "homepage": "https://manhpd.github.io/24-react-query",
-  "predeploy": "npm run build",
-  "deploy": "gh-pages -d build"
+  
 
 }
