@@ -15,22 +15,20 @@ class CustomError extends Error {
 
 export async function fetchEvents({ signal, searchTerm }: { signal: AbortSignal; searchTerm?: string }) {
   console.log(searchTerm);
-  let url = 'http://localhost:3000/events';
+
+  // Mocking events since the backend is not ready
+  const events = [
+    { id: '1', name: 'Event 1', date: '2023-01-01' },
+    { id: '2', name: 'Event 2', date: '2023-02-01' },
+    { id: '3', name: 'Event 3', date: '2023-03-01' },
+  ];
 
   if (searchTerm) {
-    url += '?search=' + searchTerm;
+    return events.filter(event => event.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }
-
-  const response = await fetch(url, { signal: signal });
-
-  if (!response.ok) {
-    const info = await response.json();
-    throw new CustomError('An error occurred while fetching the events', response.status, info);
-  }
-
-  const { events } = await response.json();
 
   return events;
+
 }
 
 export async function createNewEvent(eventData: any) {

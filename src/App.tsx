@@ -1,7 +1,7 @@
 import {
   Navigate,
   RouterProvider,
-  createBrowserRouter,
+  createHashRouter, // Use HashRouter instead of BrowserRouter
 } from 'react-router-dom';
 
 import Events from './components/Events/Events.jsx';
@@ -11,7 +11,7 @@ import EditEvent from './components/Events/EditEvent.jsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './utils/http.js';
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '/',
     element: <Navigate to="/events" />,
@@ -39,13 +39,12 @@ const router = createBrowserRouter([
   },
 ]);
 
-
-
 function App() {
-  return <QueryClientProvider client={queryClient}>
-    <RouterProvider router={router} />
-  </QueryClientProvider>
-    ;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
 }
 
 export default App;
