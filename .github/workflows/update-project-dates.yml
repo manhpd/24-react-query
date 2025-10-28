@@ -1,147 +1,30 @@
-name: Auto update startDate & endDate on Project changes
+name: Set startDate when branch created
 
 on:
-  projects_v2_item:
-    types: [edited]
-
-permissions:
-  contents: read
-  issues: write
+  create:
+    branches:
+      - '**'
 
 jobs:
-  update-dates:
-    name: Update project start/end dates
+  setStartDate:
     runs-on: ubuntu-latest
     steps:
-      - name: Update project dates (find fields by name)
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // Configure these values:
-            const projectTitle = "test project" // Replace with your Project (v2) title
-            const startFieldName = "Start Date"  // Replace with the exact field name for start date
-            const endFieldName = "End Date"      // Replace with the exact field name for end date
+      - name: Extract issue number from branch name
+        id: extract
+        run: |
+          branch="${GITHUB_REF_NAME}"
+          if [[ "$branch" =~ ([0-9]+) ]]; then
+            echo "issue_number=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+          fi
 
-            // get the incoming projects_v2_item payload
-            const payloadItem = context.payload.projects_v2_item
-            if (!payloadItem) {
-              console.log("No projects_v2_item payload present. Exiting.")
-              return
-            }
-            const itemId = payloadItem.project_item?.id
-            if (!itemId) {
-              console.log("No project_item.id in payload. Exiting.")
-              return
-            }
-
-            // determine the new value of the changed field (shape may vary)
-            const fieldChange = payloadItem.changes?.field_value
-            const newValue = fieldChange?.new_text || fieldChange?.new_name
-            if (!newValue) {
-              console.log("No new value found in payload field change. Exiting.")
-              return
-            }
-
-            // Helper: query repository projectsV2 first, then organization projectsV2 as fallback
-            async function getProjectAndFields() {
-              const repoQuery = `
-                query($owner: String!, $name: String!) {
-                  repository(owner: $owner, name: $name) {
-                    projectsV2(first: 50) {
-                      nodes {
-                        id
-                        title
-                        fields(first: 100) {
-                          nodes { id name dataType }
-                        }
-                      }
-                    }
-                  }
-                }
-              `
-              const repoRes = await github.graphql(repoQuery, {
-                owner: context.repo.owner,
-                name: context.repo.repo
-              })
-
-              const repoProjects = repoRes?.repository?.projectsV2?.nodes || []
-              let project = repoProjects.find(p => p.title === projectTitle)
-
-              if (project) return project
-
-              // fallback: organization-level projects
-              const orgQuery = `
-                query($login: String!) {
-                  organization(login: $login) {
-                    projectsV2(first: 50) {
-                      nodes {
-                        id
-                        title
-                        fields(first: 100) {
-                          nodes { id name dataType }
-                        }
-                      }
-                    }
-                  }
-                }
-              `
-              const orgRes = await github.graphql(orgQuery, { login: context.repo.owner })
-              const orgProjects = orgRes?.organization?.projectsV2?.nodes || []
-              project = orgProjects.find(p => p.title === projectTitle)
-              return project
-            }
-
-            const project = await getProjectAndFields()
-            if (!project) {
-              console.log(`Project with title "${projectTitle}" not found in repository or org. Exiting.`)
-              return
-            }
-
-            const startField = project.fields.nodes.find(f => f.name === startFieldName)
-            const endField = project.fields.nodes.find(f => f.name === endFieldName)
-
-            if (!startField) console.log(`Start field "${startFieldName}" not found in project "${projectTitle}".`)
-            if (!endField) console.log(`End field "${endFieldName}" not found in project "${projectTitle}".`)
-            if (!startField && !endField) return
-
-            const now = new Date().toISOString().split('T')[0] // yyyy-mm-dd
-
-            async function updateDateField(fieldId, date) {
-              const mutation = `
-                mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $date: Date!) {
-                  updateProjectV2ItemFieldValue(input: {
-                    projectId: $projectId,
-                    itemId: $itemId,
-                    fieldId: $fieldId,
-                    value: { date: $date }
-                  }) {
-                    projectV2Item { id }
-                  }
-                }
-              `
-              console.log(`Setting field ${fieldId} => ${date}`)
-              try {
-                await github.graphql(mutation, {
-                  projectId: project.id,
-                  itemId,
-                  fieldId,
-                  date
-                })
-                console.log(`Updated field ${fieldId} successfully.`)
-              } catch (err) {
-                console.error("Failed to update field:", err.message || err)
-              }
-            }
-
-            // Example logic: set start date when status becomes "In Progress"
-            if (newValue === "In Progress" && startField) {
-              await updateDateField(startField.id, now)
-            }
-
-            // Example logic: set end date when status becomes "Done" (adjust to your status name)
-            if (newValue === "Done" && endField) {
-              await updateDateField(endField.id, now)
-            }
-
-            console.log("Script finished.")
+      - name: Set startDate on issue
+        if: steps.extract.outputs.issue_number != ''
+        run: |
+          issue_number=${{ steps.extract.outputs.issue_number }}
+          date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          gh api repos/${{ github.repository }}/issues/$issue_number \
+            --method PATCH \
+            -f labels="In Progress" \
+            -f body="Started at $date"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
