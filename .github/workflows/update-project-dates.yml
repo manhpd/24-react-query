@@ -39,6 +39,7 @@ jobs:
                   nodes {
                     id
                     title
+                    url
                   }
                 }
               }
