@@ -1,0 +1,65 @@
+name: Auto update startDate & endDate on Project changes
+
+on:
+  projects_v2_item:
+    types: [edited]
+
+jobs:
+  update-dates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Status field and update dates
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const projectId = "PROJECT_ID" // Replace this
+            const startDateFieldId = "FIELD_ID_STARTDATE" // Replace this
+            const endDateFieldId = "FIELD_ID_ENDDATE" // Replace this
+
+            const item = context.payload.projects_v2_item
+            const itemId = item.project_item.id
+
+            // Check which field was updated
+            const statusField = item.changes?.field_value?.field_node_id
+            const newValue = item.changes?.field_value?.new_text || item.changes?.field_value?.new_name
+
+            // Only trigger when the Status field changes
+            if (!newValue) {
+              console.log("No status change detected.")
+              return
+            }
+
+            const now = new Date().toISOString().split('T')[0] // yyyy-mm-dd
+
+            if (newValue === "In Progress") {
+              console.log("Updating startDate =", now)
+              await github.graphql(`
+                mutation {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: "${projectId}",
+                    itemId: "${itemId}",
+                    fieldId: "${startDateFieldId}",
+                    value: { date: "${now}" }
+                  }) {
+                    projectV2Item { id }
+                  }
+                }
+              `)
+            }
+
+            if (newValue === "Test") {
+              console.log("Updating endDate =", now)
+              await github.graphql(`
+                mutation {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: "${projectId}",
+                    itemId: "${itemId}",
+                    fieldId: "${endDateFieldId}",
+                    value: { date: "${now}" }
+                  }) {
+                    projectV2Item { id }
+                  }
+                }
+              `)
+            }
