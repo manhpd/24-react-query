@@ -1,32 +1,53 @@
-name: Set startDate when branch created
+name: Auto Set Start Date on Branch Create
 
 on:
   create:
     branches:
-      - '**'
-permissions:
-  contents: write
-  issues: write
-  
-jobs:
-  setStartDate:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Extract issue number from branch name
-        id: extract
-        run: |
-          branch="${GITHUB_REF_NAME}"
-          if [[ "$branch" =~ ([0-9]+) ]]; then
-            echo "issue_number=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
-          fi
+      - '*'
 
-      - name: Set startDate on issue
-        if: steps.extract.outputs.issue_number != ''
-        run: |
-          issue_number=${{ steps.extract.outputs.issue_number }}
-          date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          gh api repos/${{ github.repository }}/issues/$issue_number \
-            --method PATCH \
-            --raw-field body="Started at $date"
+jobs:
+  set_start_date:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check if branch is linked to issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          echo "Branch created: $BRANCH"
+          
+          # 1️⃣ Tìm issue number trong tên branch (ví dụ feature/123-add-login)
+          ISSUE_NUMBER=$(echo "$BRANCH" | grep -oE '[0-9]+' | head -n 1)
+          
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "❌ No issue number found in branch name."
+            exit 0
+          fi
+          
+          echo "✅ Found issue number: $ISSUE_NUMBER"
+
+          # 2️⃣ Kiểm tra issue có tồn tại không
+          ISSUE=$(gh api repos/$REPO/issues/$ISSUE_NUMBER --jq '.number' || echo "")
+          if [ -z "$ISSUE" ]; then
+            echo "❌ Issue #$ISSUE_NUMBER not found in $REPO."
+            exit 0
+          fi
+
+          # 3️⃣ Set startDate = now (ISO 8601 UTC)
+          START_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          echo "🕒 Setting start date for issue #$ISSUE_NUMBER → $START_DATE"
+
+          # 4️⃣ Update issue body (append hoặc ghi đè nếu cần)
+          BODY=$(gh api repos/$REPO/issues/$ISSUE_NUMBER --jq '.body')
+          NEW_BODY="$BODY\n\n**Start Date:** $START_DATE"
+
+          gh api \
+            --method PATCH \
+            -H "Accept: application/vnd.github+json" \
+            repos/$REPO/issues/$ISSUE_NUMBER \
+            -f body="$NEW_BODY"
+
+          echo "✅ Issue #$ISSUE_NUMBER updated with start date."
