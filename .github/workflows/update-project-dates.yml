@@ -1,7 +1,7 @@
 name: Auto update startDate & endDate on Project changes
 
 on:
-  project_column:
+  projects_v2_item:
     types: [edited]
 
 permissions:
