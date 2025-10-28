@@ -4,7 +4,10 @@ on:
   create:
     branches:
       - '*'
-
+permissions:
+  issues: write
+  contents: read
+  
 jobs:
   set_start_date:
     runs-on: ubuntu-latest
