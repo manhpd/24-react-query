@@ -35,7 +35,7 @@ jobs:
             echo "Issue Node ID: $ISSUE_NODE_ID"
         
             # Lấy item id của issue trong project (giả sử project nằm ở owner level)
-              PROJECT_ID=$(gh api graphql -f query='
+            PROJECT_ID=$(gh api graphql -f query='
               query($owner:String!, $repo:String!) {
                 repository(owner:$owner, name:$repo) {
                   projectsV2(first: 10) {
@@ -46,9 +46,9 @@ jobs:
                   }
                 }
               }' \
-              -f owner="${GITHUB_REPOSITORY%/*}" \
-              -f repo="${GITHUB_REPOSITORY#*/}" \
-              --jq '.data.repository.projectsV2.nodes[] | select(.title=="Development Board") | .id')
+              -f owner="${REPO%/*}" \
+              -f -f repo="${REPO#*/}"\
+              --jq '.data.repository.projectsV2.nodes[] | select(.title=="test project") | .id')
         
             echo "Project ID: $PROJECT_ID"
         
