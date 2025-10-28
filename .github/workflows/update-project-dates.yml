@@ -11,7 +11,7 @@ jobs:
       - name: Check Status field and update dates
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.ACTIONS_DEPLOY_ACCESS_TOKEN }}
           script: |
             const projectId = "PROJECT_ID" // Replace this
             const startDateFieldId = "FIELD_ID_STARTDATE" // Replace this
