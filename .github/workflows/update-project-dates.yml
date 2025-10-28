@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Debug show all user projects
         env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN: ${{ secrets.MY_NEW_TOKEN }}
         run: |
              gh api graphql -f query='
               query{
