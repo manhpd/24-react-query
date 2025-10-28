@@ -13,6 +13,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug show all user projects
+        run: |
+          gh api graphql -f query='
+          query($user:String!) {
+            user(login:$user) {
+              projectsV2(first: 20) {
+                nodes {
+                  id
+                  title
+                  url
+                }
+              }
+            }
+          }' -f user="manhpd"
+          
       - name: Set Start Date field in ProjectV2
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
