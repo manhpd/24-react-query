@@ -30,25 +30,21 @@ jobs:
                 }
               }
             }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" -F number=$ISSUE_NUMBER --jq '.data.repository.issue.id')
-      
           echo "Issue Node ID: $ISSUE_NODE_ID"
-           
-          $PROJECT_ID =$(gh api graphql -f query='
+          
+          PROJECT_ID=$(gh api graphql -f query='
             query($owner:String!, $repo:String!) {
               repository(owner:$owner, name:$repo) {
-                projectsV2(first: 1) {
+                projectsV2(first: 10) {
                   nodes {
                     id
                     title
-                    url
                   }
                 }
               }
-            }' -f owner="${REPO%/*}" -f repo="${REPO#*/}")
-
-        
+            }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" --jq '.data.repository.projectsV2.nodes[] | select(.title=="test project") | .id')
           echo "Project ID: $PROJECT_ID"
-        
+          
           ITEM_ID=$(gh api graphql -f query='
             query($project:ID!, $issue:ID!) {
               node(id:$project) {
@@ -67,10 +63,7 @@ jobs:
                 }
               }
             }' -F project=$PROJECT_ID -F issue=$ISSUE_NODE_ID --jq ".data.node.items.nodes[] | select(.content.id==\"$ISSUE_NODE_ID\") | .id")
-      
           echo "Item ID: $ITEM_ID"
-        
-          # Lấy ID của field “Start Date”
           FIELD_ID=$(gh api graphql -f query='
             query($project:ID!) {
               node(id:$project) {
@@ -84,12 +77,8 @@ jobs:
                 }
               }
             }' -F project=$PROJECT_ID --jq '.data.node.fields.nodes[] | select(.name=="Start Date") | .id')
-      
           echo "Field ID (Start Date): $FIELD_ID"
-      
           START_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-      
-          # Cập nhật giá trị Start Date
           gh api graphql -f query='
             mutation($project:ID!, $item:ID!, $field:ID!, $value:String!) {
               updateProjectV2ItemFieldValue(input:{
@@ -105,5 +94,4 @@ jobs:
                   }
                 }
               }' -F project=$PROJECT_ID -F item=$ITEM_ID -F field=$FIELD_ID -F value=$START_DATE
-        
             echo "✅ Start Date updated to $START_DATE"
