@@ -22,33 +22,28 @@ jobs:
           ISSUE_NUMBER=$(echo "$BRANCH" | grep -oE '[0-9]+' | head -n 1)
           echo "Issue Number: $ISSUE_NUMBER"
          
-          # Lấy issue node ID (GraphQL dùng nodeId, không phải issue_number)
-            ISSUE_NODE_ID=$(gh api graphql -f query='
-              query($owner:String!, $repo:String!, $number:Int!) {
-                repository(owner:$owner, name:$repo) {
-                  issue(number:$number) {
+          ISSUE_NODE_ID=$(gh api graphql -f query='
+            query($owner:String!, $repo:String!, $number:Int!) {
+              repository(owner:$owner, name:$repo) {
+                issue(number:$number) {
+                  id
+                }
+              }
+            }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" -F number=$ISSUE_NUMBER --jq '.data.repository.issue.id')
+      
+          echo "Issue Node ID: $ISSUE_NODE_ID"
+           
+          PROJECT_ID=$(gh api graphql -f query='
+            query($owner:String!, $repo:String!) {
+              repository(owner:$owner, name:$repo) {
+                projectsV2(first: 10) {
+                  nodes {
                     id
+                    title
                   }
                 }
-              }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" -F number=$ISSUE_NUMBER --jq '.data.repository.issue.id')
-        
-            echo "Issue Node ID: $ISSUE_NODE_ID"
-        
-            # Lấy item id của issue trong project (giả sử project nằm ở owner level)
-            PROJECT_ID=$(gh api graphql -f query='
-              query($owner:String!, $repo:String!) {
-                repository(owner:$owner, name:$repo) {
-                  projectsV2(first: 10) {
-                    nodes {
-                      id
-                      title
-                    }
-                  }
-                }
-              }' \
-              -f owner="${REPO%/*}" \
-              -f -f repo="${REPO#*/}"\
-              --jq '.data.repository.projectsV2.nodes[] | select(.title=="test project") | .id')
+              }
+            }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" --jq '.data.repository.projectsV2.nodes[] | select(.title=="test project") | .id')
         
             echo "Project ID: $PROJECT_ID"
         
