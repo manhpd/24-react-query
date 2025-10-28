@@ -33,70 +33,72 @@ jobs:
       
           echo "Issue Node ID: $ISSUE_NODE_ID"
            
-          PROJECT_ID=$(gh api graphql -f query='
+          $PROJECT_ID =$(gh api graphql -f query='
             query($owner:String!, $repo:String!) {
               repository(owner:$owner, name:$repo) {
-                projectsV2(first: 10) {
+                projectsV2(first: 1) {
                   nodes {
                     id
                     title
+                    url
                   }
                 }
               }
-            }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" --jq '.data.repository.projectsV2.nodes[] | select(.title=="test project") | .id')
+            }' -f owner="${REPO%/*}" -f repo="${REPO#*/}")
+
         
-            echo "Project ID: $PROJECT_ID"
+          echo "Project ID: $PROJECT_ID"
         
-            ITEM_ID=$(gh api graphql -f query='
-              query($project:ID!, $issue:ID!) {
-                node(id:$project) {
-                  ... on ProjectV2 {
-                    items(first: 100) {
-                      nodes {
-                        id
-                        content {
-                          ... on Issue {
-                            id
-                            number
-                          }
+          ITEM_ID=$(gh api graphql -f query='
+            query($project:ID!, $issue:ID!) {
+              node(id:$project) {
+                ... on ProjectV2 {
+                  items(first: 100) {
+                    nodes {
+                      id
+                      content {
+                        ... on Issue {
+                          id
+                          number
                         }
                       }
                     }
                   }
                 }
-              }' -F project=$PROJECT_ID -F issue=$ISSUE_NODE_ID --jq ".data.node.items.nodes[] | select(.content.id==\"$ISSUE_NODE_ID\") | .id")
+              }
+            }' -F project=$PROJECT_ID -F issue=$ISSUE_NODE_ID --jq ".data.node.items.nodes[] | select(.content.id==\"$ISSUE_NODE_ID\") | .id")
+      
+          echo "Item ID: $ITEM_ID"
         
-            echo "Item ID: $ITEM_ID"
-        
-            # Lấy ID của field “Start Date”
-            FIELD_ID=$(gh api graphql -f query='
-              query($project:ID!) {
-                node(id:$project) {
-                  ... on ProjectV2 {
-                    fields(first:50) {
-                      nodes {
-                        id
-                        name
-                      }
+          # Lấy ID của field “Start Date”
+          FIELD_ID=$(gh api graphql -f query='
+            query($project:ID!) {
+              node(id:$project) {
+                ... on ProjectV2 {
+                  fields(first:50) {
+                    nodes {
+                      id
+                      name
                     }
                   }
                 }
-              }' -F project=$PROJECT_ID --jq '.data.node.fields.nodes[] | select(.name=="Start Date") | .id')
-        
-            echo "Field ID (Start Date): $FIELD_ID"
-        
-            START_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        
-            # Cập nhật giá trị Start Date
-            gh api graphql -f query='
-              mutation($project:ID!, $item:ID!, $field:ID!, $value:String!) {
-                updateProjectV2ItemFieldValue(input:{
-                  projectId: $project
-                  itemId: $item
-                  fieldId: $field
-                  value: { 
-                    date: $value
-                  }
+              }
+            }' -F project=$PROJECT_ID --jq '.data.node.fields.nodes[] | select(.name=="Start Date") | .id')
+      
+          echo "Field ID (Start Date): $FIELD_ID"
+      
+          START_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      
+          # Cập nhật giá trị Start Date
+          gh api graphql -f query='
+            mutation($project:ID!, $item:ID!, $field:ID!, $value:String!) {
+              updateProjectV2ItemFieldValue(input:{
+                projectId: $project
+                itemId: $item
+                fieldId: $field
+                value: { 
+                  date: $value
+                }
                 }) {
                   projectV2Item {
                     id
