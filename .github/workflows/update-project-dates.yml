@@ -20,6 +20,7 @@ jobs:
           BRANCH: ${{ github.ref_name }}
         run: |
           ISSUE_NUMBER=$(echo "$BRANCH" | grep -oE '[0-9]+' | head -n 1)
+          echo "Issue Number: $ISSUE_NUMBER"
           
           # Lấy issue node ID (GraphQL dùng nodeId, không phải issue_number)
           ISSUE_NODE_ID=$(gh api graphql -f query='
