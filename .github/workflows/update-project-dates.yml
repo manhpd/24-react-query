@@ -23,6 +23,8 @@ jobs:
       - name: Set startDate on issue
         if: steps.extract.outputs.issue_number != ''
         run: |
+          issue_number=${{ steps.extract.outputs.issue_number }}
+          date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           gh api repos/${{ github.repository }}/issues/$issue_number \
             --method PATCH \
             --field labels='["In Progress"]' \
