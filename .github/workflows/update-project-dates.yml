@@ -17,19 +17,14 @@ jobs:
         env:
             GH_TOKEN: ${{ secrets.MY_GH_TOKEN }}
         run: |
-          gh api graphql -f query='
-          query($user:String!) {
-            user(login:$user) {
-              projectsV2(first: 20) {
-                nodes {
-                  id
-                  title
-                  url
+             gh api graphql -f query='
+              query{
+                user(login: "manhpd"){
+                  projectV2(number: NUMBER) {
+                    id
+                  }
                 }
-              }
-            }
-          }' -f user="manhpd"
-          
+              }'
       - name: Set Start Date field in ProjectV2
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
