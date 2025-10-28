@@ -20,7 +20,7 @@ jobs:
              gh api graphql -f query='
               query{
                 user(login: "manhpd"){
-                  projectV2(number: NUMBER) {
+                  projectV2(number: 2) {
                     id
                   }
                 }
