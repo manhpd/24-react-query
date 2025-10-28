@@ -45,7 +45,7 @@ jobs:
                     }
                   }
                 }
-              }' -f owner="${REPO%/*}" --jq '.data.user.projectsV2.nodes[] | select(.title=="Your Project Name") | .id')
+              }' -f owner="${REPO%/*}" --jq '.data.user.projectsV2.nodes[] | select(.title=="test project") | .id')
         
             echo "Project ID: $PROJECT_ID"
         
