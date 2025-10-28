@@ -27,7 +27,7 @@ jobs:
                   id
                 }
               }
-            }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" -F number=$ISSUE_NUMBER --jq '.data.repository.issue.id')
+            }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" -f number=$ISSUE_NUMBER --jq '.data.repository.issue.id')
       
           echo "Issue Node ID: $ISSUE_NODE_ID"
       
@@ -63,7 +63,7 @@ jobs:
                   }
                 }
               }
-            }' -F project=$PROJECT_ID -F issue=$ISSUE_NODE_ID --jq ".data.node.items.nodes[] | select(.content.id==\"$ISSUE_NODE_ID\") | .id")
+            }' -f project=$PROJECT_ID -f issue=$ISSUE_NODE_ID --jq ".data.node.items.nodes[] | select(.content.id==\"$ISSUE_NODE_ID\") | .id")
       
           echo "Item ID: $ITEM_ID"
       
@@ -80,7 +80,7 @@ jobs:
                   }
                 }
               }
-            }' -F project=$PROJECT_ID --jq '.data.node.fields.nodes[] | select(.name=="Start Date") | .id')
+            }' -f project=$PROJECT_ID --jq '.data.node.fields.nodes[] | select(.name=="Start Date") | .id')
       
           echo "Field ID (Start Date): $FIELD_ID"
       
@@ -101,6 +101,6 @@ jobs:
                   id
                 }
               }
-            }' -F project=$PROJECT_ID -F item=$ITEM_ID -F field=$FIELD_ID -F value=$START_DATE
+            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value=$START_DATE
       
           echo "✅ Start Date updated to $START_DATE"
