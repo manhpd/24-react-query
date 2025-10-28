@@ -32,9 +32,10 @@ jobs:
             }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" -F number=$ISSUE_NUMBER --jq '.data.repository.issue.id')
           echo "Issue Node ID: $ISSUE_NODE_ID"
           
+          USER="manhpd"
           PROJECT_ID=$(gh api graphql -f query='
-            query($owner:String!, $repo:String!) {
-              repository(owner:$owner, name:$repo) {
+            query($user:String!) {
+              user(login:$user) {
                 projectsV2(first: 10) {
                   nodes {
                     id
@@ -43,7 +44,7 @@ jobs:
                   }
                 }
               }
-            }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" --jq '.data.repository.projectsV2.nodes[] | select(.title=="test project") | .id')
+            }' -f user="$USER" --jq '.data.user.projectsV2.nodes[] | select(.title=="test project") | .id')
           echo "Project ID: $PROJECT_ID"
           
           ITEM_ID=$(gh api graphql -f query='
