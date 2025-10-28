@@ -19,9 +19,12 @@ jobs:
         run: |
              gh api graphql -f query='
               query{
-                user(login: "manhpd"){
-                  projectV2(first: 10) {
-                    id
+                user(login: "manhpd") {
+                  projectsV2(first: 20) {
+                    nodes {
+                      id
+                      title
+                    }
                   }
                 }
               }'
