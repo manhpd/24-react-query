@@ -16,7 +16,7 @@ jobs:
       - name: Set Start Date field in ProjectV2
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE_NUMBER: ${{ steps.extract.outputs.issue_number }}
+          ISSUE_NUMBER: $(echo "${{ steps.extract.outputs.issue_number }}" | grep -oE '^[0-9]+$' | tr -d '\n')
           REPO: ${{ github.repository }}
         run: |
           # Lấy issue node ID (GraphQL dùng nodeId, không phải issue_number)
