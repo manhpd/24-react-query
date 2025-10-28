@@ -27,7 +27,7 @@ jobs:
           date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           gh api repos/${{ github.repository }}/issues/$issue_number \
             --method PATCH \
-            -f labels="In Progress" \
+            -f labels='["In Progress"]' \
             -f body="Started at $date"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
