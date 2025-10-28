@@ -13,44 +13,94 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check if branch is linked to issue
+      - name: Set Start Date field in ProjectV2
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ steps.extract.outputs.issue_number }}
           REPO: ${{ github.repository }}
-          BRANCH: ${{ github.ref_name }}
         run: |
-          echo "Branch created: $BRANCH"
-          
-          # 1️⃣ Tìm issue number trong tên branch (ví dụ feature/123-add-login)
-          ISSUE_NUMBER=$(echo "$BRANCH" | grep -oE '[0-9]+' | head -n 1)
-          
-          if [ -z "$ISSUE_NUMBER" ]; then
-            echo "❌ No issue number found in branch name."
-            exit 0
-          fi
-          
-          echo "✅ Found issue number: $ISSUE_NUMBER"
-
-          # 2️⃣ Kiểm tra issue có tồn tại không
-          ISSUE=$(gh api repos/$REPO/issues/$ISSUE_NUMBER --jq '.number' || echo "")
-          if [ -z "$ISSUE" ]; then
-            echo "❌ Issue #$ISSUE_NUMBER not found in $REPO."
-            exit 0
-          fi
-
-          # 3️⃣ Set startDate = now (ISO 8601 UTC)
+          # Lấy issue node ID (GraphQL dùng nodeId, không phải issue_number)
+          ISSUE_NODE_ID=$(gh api graphql -f query='
+            query($owner:String!, $repo:String!, $number:Int!) {
+              repository(owner:$owner, name:$repo) {
+                issue(number:$number) {
+                  id
+                }
+              }
+            }' -f owner="${REPO%/*}" -f repo="${REPO#*/}" -F number=$ISSUE_NUMBER --jq '.data.repository.issue.id')
+      
+          echo "Issue Node ID: $ISSUE_NODE_ID"
+      
+          # Lấy item id của issue trong project (giả sử project nằm ở owner level)
+          PROJECT_ID=$(gh api graphql -f query='
+            query($owner:String!) {
+              user(login:$owner) {
+                projectsV2(first: 5) {
+                  nodes {
+                    id
+                    title
+                  }
+                }
+              }
+            }' -f owner="${REPO%/*}" --jq '.data.user.projectsV2.nodes[] | select(.title=="Your Project Name") | .id')
+      
+          echo "Project ID: $PROJECT_ID"
+      
+          ITEM_ID=$(gh api graphql -f query='
+            query($project:ID!, $issue:ID!) {
+              node(id:$project) {
+                ... on ProjectV2 {
+                  items(first: 100) {
+                    nodes {
+                      id
+                      content {
+                        ... on Issue {
+                          id
+                          number
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -F project=$PROJECT_ID -F issue=$ISSUE_NODE_ID --jq ".data.node.items.nodes[] | select(.content.id==\"$ISSUE_NODE_ID\") | .id")
+      
+          echo "Item ID: $ITEM_ID"
+      
+          # Lấy ID của field “Start Date”
+          FIELD_ID=$(gh api graphql -f query='
+            query($project:ID!) {
+              node(id:$project) {
+                ... on ProjectV2 {
+                  fields(first:50) {
+                    nodes {
+                      id
+                      name
+                    }
+                  }
+                }
+              }
+            }' -F project=$PROJECT_ID --jq '.data.node.fields.nodes[] | select(.name=="Start Date") | .id')
+      
+          echo "Field ID (Start Date): $FIELD_ID"
+      
           START_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-          echo "🕒 Setting start date for issue #$ISSUE_NUMBER → $START_DATE"
-
-          # 4️⃣ Update issue body (append hoặc ghi đè nếu cần)
-          BODY=$(gh api repos/$REPO/issues/$ISSUE_NUMBER --jq '.body')
-          NEW_BODY="$BODY\n\n**Start Date:** $START_DATE"
-
-          gh api \
-            --method PATCH \
-            -H "Accept: application/vnd.github+json" \
-            repos/$REPO/issues/$ISSUE_NUMBER \
-            -f body="$NEW_BODY"
-
-          echo "✅ Issue #$ISSUE_NUMBER updated with start date."
+      
+          # Cập nhật giá trị Start Date
+          gh api graphql -f query='
+            mutation($project:ID!, $item:ID!, $field:ID!, $value:String!) {
+              updateProjectV2ItemFieldValue(input:{
+                projectId: $project
+                itemId: $item
+                fieldId: $field
+                value: { 
+                  date: $value
+                }
+              }) {
+                projectV2Item {
+                  id
+                }
+              }
+            }' -F project=$PROJECT_ID -F item=$ITEM_ID -F field=$FIELD_ID -F value=$START_DATE
+      
+          echo "✅ Start Date updated to $START_DATE"
