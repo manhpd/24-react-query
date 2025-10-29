@@ -126,5 +126,5 @@ jobs:
             -F project=$PROJECT_ID \
             -F item=$ITEM_ID \
             -F field=$FIELD_ID \
-            -F value="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            -F value="$(date -u +'%Y-%m-%d')"
           echo "✅ Start Date updated to $START_DATE"
