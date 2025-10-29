@@ -64,7 +64,7 @@ jobs:
           echo "Project ID: $PROJECT_ID"
           
           ITEM_ID=$(gh api graphql -f query='
-            query($project:ID!, $issue:ID!) {
+            query($project:ID!) {
               node(id:$project) {
                 ... on ProjectV2 {
                   items(first: 100) {
