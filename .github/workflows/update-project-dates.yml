@@ -88,28 +88,43 @@ jobs:
                 ... on ProjectV2 {
                   fields(first:50) {
                     nodes {
-                      id
-                      name
+                      ... on ProjectV2FieldCommon {
+                        id
+                        name
+                      }
+                      ... on ProjectV2IterationField {
+                        id
+                        name
+                      }
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                      }
                     }
                   }
                 }
               }
             }' -F project=$PROJECT_ID --jq '.data.node.fields.nodes[] | select(.name=="Start Date") | .id')
+          
           echo "Field ID (Start Date): $FIELD_ID"
           START_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           gh api graphql -f query='
             mutation($project:ID!, $item:ID!, $field:ID!, $value:String!) {
-              updateProjectV2ItemFieldValue(input:{
-                projectId: $project
-                itemId: $item
-                fieldId: $field
-                value: { 
-                  date: $value
+              updateProjectV2ItemFieldValue(
+                input: {
+                  projectId: $project,
+                  itemId: $item,
+                  fieldId: $field,
+                  value: { text: $value }
                 }
-                }) {
-                  projectV2Item {
-                    id
-                  }
+              ) {
+                projectV2Item {
+                  id
                 }
-              }' -F project=$PROJECT_ID -F item=$ITEM_ID -F field=$FIELD_ID -F value=$START_DATE
-            echo "✅ Start Date updated to $START_DATE"
+              }
+            }' \
+            -F project=$PROJECT_ID \
+            -F item=$ITEM_ID \
+            -F field=$FIELD_ID \
+            -F value="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          echo "✅ Start Date updated to $START_DATE"
