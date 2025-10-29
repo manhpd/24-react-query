@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Debug show all user projects
         env:
-            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN: ${{ secrets.PROJECT_GH_KEY }}
         run: |
              gh api graphql -f query='
               query{
@@ -31,7 +31,7 @@ jobs:
               }'
       - name: Set Start Date field in ProjectV2
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PROJECT_GH_KEY }}
           REPO: ${{ github.repository }}
           BRANCH: ${{ github.ref_name }}
         run: |
