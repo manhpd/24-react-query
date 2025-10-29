@@ -107,15 +107,18 @@ jobs:
             }' -F project=$PROJECT_ID --jq '.data.node.fields.nodes[] | select(.name=="Start Date") | .id')
           
           echo "Field ID (Start Date): $FIELD_ID"
-          START_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          
+          DATE=$(date -u +'%Y-%m-%d')
+          echo "Will set date: $DATE"
+          
           gh api graphql -f query='
-            mutation($project:ID!, $item:ID!, $field:ID!, $value:String!) {
+            mutation($project:ID!, $item:ID!, $field:ID!, $date:Date!) {
               updateProjectV2ItemFieldValue(
                 input: {
-                  projectId: $project,
-                  itemId: $item,
-                  fieldId: $field,
-                  value: { text: $value }
+                  projectId: $project
+                  itemId: $item
+                  fieldId: $field
+                  value: { date: $date }
                 }
               ) {
                 projectV2Item {
@@ -123,8 +126,8 @@ jobs:
                 }
               }
             }' \
-            -F project=$PROJECT_ID \
-            -F item=$ITEM_ID \
-            -F field=$FIELD_ID \
-            -F value="$(date -u +'%Y-%m-%d')"
-          echo "✅ Start Date updated to $START_DATE"
+            -f project="$PROJECT_ID" \
+            -f item="$ITEM_ID" \
+            -f field="$FIELD_ID" \
+            -f date="$DATE"
+          echo "✅ Start Date updated to $DATE"
