@@ -19,9 +19,8 @@ jobs:
       - name: Get commit messages
         id: commits
         run: |
-          echo "MESSAGES<<EOF" >> $GITHUB_ENV
-          git log -1 --pretty=format:"%s%n%n%b" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          MESSAGES=$(git log -1 --pretty=%B | sed 's/"/\\"/g')
+          echo "MESSAGES=$MESSAGES" >> $GITHUB_ENV
 
       - name: Extract issue numbers from commit
         id: extract
