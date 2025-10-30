@@ -1,0 +1,52 @@
+name: Add merge commit message to related issue
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  add-merge-comment:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Get commit messages
+        id: commits
+        run: |
+          echo "MESSAGES<<EOF" >> $GITHUB_ENV
+          git log -1 --pretty=format:"%s%n%n%b" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Extract issue numbers from commit
+        id: extract
+        run: |
+          ISSUE_NUMBER=$(echo "$MESSAGES" | grep -oE '#[0-9]+' | head -n 1 | tr -d '#')
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "No issue ID found in commit message. Skipping."
+            exit 0
+          fi
+          echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> $GITHUB_ENV
+          echo "Found issue: #$ISSUE_NUMBER"
+
+      - name: Add comment to related issue
+        if: env.ISSUE_NUMBER != ''
+        run: |
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
+          COMMENT="### 🔗 Merged Commit Linked
+**Commit:** [${{ github.sha }}]($COMMIT_URL)
+**Author:** ${{ github.actor }}
+**Message:**  
+$(git log -1 --pretty=format:'%s%n%n%b')
+
+*(Added automatically when the commit was merged to main)*"
+
+          gh api repos/${{ github.repository }}/issues/${{ env.ISSUE_NUMBER }}/comments \
+            -f body="$COMMENT"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
