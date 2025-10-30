@@ -39,14 +39,14 @@ jobs:
         run: |
           COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}"
           COMMENT="### 🔗 Merged Commit Linked
-**Commit:** [${{ github.sha }}]($COMMIT_URL)
-**Author:** ${{ github.actor }}
-**Message:**  
-$(git log -1 --pretty=format:'%s%n%n%b')
-
-*(Added automatically when the commit was merged to main)*"
-
-          gh api repos/${{ github.repository }}/issues/${{ env.ISSUE_NUMBER }}/comments \
-            -f body="$COMMENT"
+            **Commit:** [${{ github.sha }}]($COMMIT_URL)
+            **Author:** ${{ github.actor }}
+            **Message:**  
+            $(git log -1 --pretty=format:'%s%n%n%b')
+            
+            *(Added automatically when the commit was merged to main)*"
+            
+                      gh api repos/${{ github.repository }}/issues/${{ env.ISSUE_NUMBER }}/comments \
+                        -f body="$COMMENT"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PROJECT_GH_KEY }}
