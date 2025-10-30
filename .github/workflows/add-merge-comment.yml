@@ -3,7 +3,7 @@ name: Add merge commit message to related issue
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   add-merge-comment:
